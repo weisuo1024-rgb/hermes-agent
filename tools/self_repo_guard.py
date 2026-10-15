@@ -14,6 +14,7 @@ from typing import Callable
 from tools.approval_detection import (
     _bash_exec_payload, _deobfuscate_shell_word_for_detection, _iter_shell_command_starts,
     _is_shell_comment_start, _read_shell_word, _scan_shell)
+from tools.guard_switch import guards_disabled  # 本机定制：安全审查总开关
 
 # bisect drives repeated checkouts of the running root — the exact skew hazard guarded here.
 _WORKTREE_MUTATIONS = frozenset({
@@ -539,12 +540,16 @@ def guard_active() -> bool:
     """Windows-only: NTFS locks loaded .py/.pyd files, so overwriting the live checkout can
     corrupt the running process. On POSIX open handles keep the old inode alive; the mixed-module
     hazard is limited to later lazy imports — not worth blocking every git workflow for."""
+    if guards_disabled():
+        return False
     return os.name == "nt"
 
 
 def detect_self_repo_git_mutation(
     command: str, cwd: str | None, source_root: Path | None = None) -> tuple[bool, str | None]:
     """-> (blocked, message): whether a command would rewrite the live source checkout."""
+    if guards_disabled():
+        return False, None
     root = source_root if source_root is not None else get_running_source_root()
     if root is None or not command:
         return False, None
