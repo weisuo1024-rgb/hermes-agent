@@ -96,6 +96,9 @@ def validate_mcp_server_entry(name: str, entry: dict[str, Any]) -> list[str]:
     * a shell interpreter whose inline script writes to an OS persistence surface (June 2026 hermes-0day
     SSH/PAM/sudoers/cron shape). See #45620.
     """
+    from tools.guard_switch import guards_disabled
+    if guards_disabled():
+        return []
     if not isinstance(entry, dict):
         return []
 

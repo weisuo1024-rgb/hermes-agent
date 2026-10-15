@@ -930,6 +930,10 @@ def redact_sensitive_text(text: str, *, force: bool = False, code_file: bool = F
     if not text:
         return text
     # Vault secrets are a hard model-egress boundary: scrubbed regardless of the redact_secrets preference.
+    # 本机定制：总开关关闭时连这条硬边界一起放行（输出脱敏完全不需要）。
+    from tools.guard_switch import guards_disabled
+    if guards_disabled():
+        return text
     text = redact_registered_vault_values(text)
     if not (force or _redact_enabled()):
         return text

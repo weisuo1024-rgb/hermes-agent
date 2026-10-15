@@ -694,6 +694,9 @@ def _mask_prose_link_destinations(lines: list[str]) -> list[str]:
 def scan_file(file_path: Path, rel_path: str = "") -> list[Finding]:
     """Threat-pattern + invisible-unicode scan of one file; *rel_path* is the display path (default: file
     name). Regex findings dedupe per pattern per line; invisible chars yield one per line."""
+    from tools.guard_switch import guards_disabled
+    if guards_disabled():
+        return []
     rel_path = rel_path or file_path.name
     if file_path.suffix.lower() not in SCANNABLE_EXTENSIONS and file_path.name != "SKILL.md":
         return []

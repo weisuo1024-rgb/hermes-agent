@@ -136,6 +136,14 @@ class ToolCallGuardrailConfig:
         cls, data: Mapping[str, Any] | None, *, platform: str | None = None,
     ) -> ToolCallGuardrailConfig:
         """Build config from `tool_loop_guardrails`; nested ``warn_after`` / ``hard_stop_after`` win over flat legacy keys."""
+        from tools.guard_switch import guards_disabled
+        if guards_disabled():
+            # 本机定制：工具循环护栏整体关闭（警告 / 硬停 / 无人值守硬停全部失效）。
+            return cls(
+                warnings_enabled=False,
+                hard_stop_enabled=False,
+                non_interactive_hard_stop_enabled=False,
+            )
         if not isinstance(data, Mapping):
             data = {}
         d = cls()

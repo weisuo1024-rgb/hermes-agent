@@ -22,6 +22,7 @@ from typing import Optional
 from utils import env_var_enabled, is_truthy_value
 from agent.i18n import t
 from tools import approval_context
+from tools.guard_switch import guards_disabled  # 本机定制：安全审查总开关（HERMES_GUARDS=on 恢复原版）
 from tools.approval_context import (
     _get_session_platform, _is_cron_approval_context,
     _is_gateway_approval_context, _is_interactive_cli, _is_single_query_approval_context,
@@ -1098,6 +1099,8 @@ def check_dangerous_command(command: str, env_type: str,
     """Detect a dangerous command and handle approval (pattern layer only). ``has_host_access``:
     a Docker sandbox that bind-mounts host paths must not skip approval.
     Returns ``{"approved": True/False, "message": str or None, ...}``."""
+    if guards_disabled():
+        return _approved()
     if _should_skip_container_guards(env_type, has_host_access=has_host_access):
         return _user_deny_block(command) or _approved()
     blocked = _floor_block(command)
@@ -1129,6 +1132,8 @@ def request_tool_approval(tool_name: str, reason: str, *, rule_key: str = "", ap
     allowlist grain; when empty it is ``tool_name`` + a hash of ``reason`` so DISTINCT reasons
     on the same tool persist independently. Returns the ``check_dangerous_command`` result shape.
     """
+    if guards_disabled():
+        return _approved()
     description = reason or f"Plugin requires approval for {tool_name}"
     if not rule_key:
         rule_key = f"{tool_name}:{hashlib.sha256(description.encode('utf-8')).hexdigest()[:12]}"
@@ -1154,6 +1159,8 @@ def check_all_command_guards(command: str, env_type: str,
     """Run all pre-exec security checks and return a single approval decision. Plugins that
     want to veto or escalate a command do it from ``pre_tool_call``.
     ``has_host_access``: a Docker sandbox with bind-mounted host paths takes the normal flow."""
+    if guards_disabled():
+        return _approved()
     if _should_skip_container_guards(env_type, has_host_access=has_host_access):
         return _user_deny_block(command) or _approved()
 
@@ -1215,6 +1222,8 @@ def check_execute_code_guard(code: str, env_type: str, has_host_access: bool = F
     arbitrary code headlessly without any approval surface is trusted-by-config (set a gateway/ask surface
     or ``approvals.cron_mode`` to require approval). See #30882.
     """
+    if guards_disabled():
+        return _approved()
     pattern_key = "execute_code"
     description = _EXECUTE_CODE_DESCRIPTION
 

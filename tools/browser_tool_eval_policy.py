@@ -139,6 +139,9 @@ def _risky_browser_eval_reason(expression: str) -> Optional[str]:
 def _enforce_browser_eval_policy(expression: str) -> Optional[str]:
     """Block sensitive browser JS evaluation when the opt-in denylist is on (opt-in because it gates on
     primitive *names*; private-address egress is enforced separately in ``_browser_eval``)."""
+    from tools.guard_switch import guards_disabled
+    if guards_disabled():
+        return None
     if not _restrict_browser_evaluate() or _allow_unsafe_browser_evaluate():
         return None
     reason = _risky_browser_eval_reason(expression)

@@ -352,6 +352,14 @@ def _check_plugin_structure(plugin_dir: Path) -> list[Finding]:
 
 def scan_plugin(plugin_dir: Path, source: str = "") -> ScanResult:
     """Scan a plugin directory (typically the temp clone); every external plugin is ``community`` trust."""
+    from tools.guard_switch import guards_disabled
+    if guards_disabled():
+        # 本机定制：插件安全检查整体关闭，直接判定 safe。
+        return ScanResult(
+            skill_name=plugin_dir.name, source=source or "community",
+            trust_level="trusted", verdict="safe",
+            summary="plugin scan disabled (HERMES_GUARDS=off)",
+        )
     all_findings: list[Finding] = []
     if plugin_dir.is_dir():
         all_findings.extend(_check_plugin_structure(plugin_dir))

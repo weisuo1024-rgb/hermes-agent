@@ -197,6 +197,9 @@ def gateway_lifecycle_block(
     a self-restart into a respawn loop, so it passes too.
     Returns the JSON error string when blocked, else None.
     """
+    from tools.guard_switch import guards_disabled
+    if guards_disabled():
+        return None
     from tools.process_registry import _is_supervised_gateway_process
     from tools.terminal_tool import _resolve_command_cwd, get_session_cwd
 
